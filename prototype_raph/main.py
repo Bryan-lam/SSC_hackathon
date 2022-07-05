@@ -1,140 +1,92 @@
 import pygame
 import os
-import random
+from array_map import *
+from submission import move
 pygame.font.init()
 
-# ---
-# Important variables
-# ---
-WIDTH, HEIGHT = 900, 500
-WIN = pygame.display.set_mode((WIDTH, HEIGHT))
+# ~~~
+# VARIABLES
+# ~~~
+
+# technical
+WINDOW_HEIGHT = 800
+WINDOW_WIDTH = 800
+SCREEN = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
 pygame.display.set_caption("Fish Swimming Across Harbour")
-FPS = 60
-
-# Constants
-WHITE = (255, 255, 255)
-OBSTACLES_WIDTH, OBSTACLES_HEIGHT = 55, 40
-WINNER_FONT = pygame.font.SysFont('arial', 100)
-
-VEL = 2
-Win = False
-Lose = False
-
-
-# ---
-# Importing Art Assets
-# ---
+FPS = 10        # smaller = slower
+#main variable
+fish_x = START_X
+fish_y = START_Y
+# aesthetics
+BLACK = (0, 0, 0)
+WHITE = (200, 200, 200)
+RED = (200,0,0)
+BLUE = (0,0,200)
+OCEAN = pygame.transform.scale(pygame.image.load(
+    os.path.join('Assets', 'background.jpg')), (WINDOW_WIDTH, WINDOW_HEIGHT))
 FISH_IMAGE = pygame.image.load(
     os.path.join('Assets', 'fish.png'))
-FISH = pygame.transform.scale(
-    FISH_IMAGE, (OBSTACLES_WIDTH, OBSTACLES_HEIGHT))
-# Obstacles
-CLAM_IMAGE = pygame.image.load(
-    os.path.join('Assets', 'shell.png'))
-CLAM = pygame.transform.scale(
-    CLAM_IMAGE, (OBSTACLES_WIDTH, OBSTACLES_HEIGHT))
-ROCK01_IMAGE = pygame.image.load(
-    os.path.join('Assets', 'rock.png'))
-ROCK01 = pygame.transform.scale(
-    ROCK01_IMAGE, (OBSTACLES_WIDTH, OBSTACLES_HEIGHT))
-# Background
-OCEAN = pygame.transform.scale(pygame.image.load(
-    os.path.join('Assets', 'background.jpg')), (WIDTH, HEIGHT))
+# draw function
+blockSize = 30          #Set the size of the grid block
+    # size of the map
+map_width = blockSize*ARRAY_WIDTH;  
+map_height = blockSize*ARRAY_HEIGHT;
+    # positioning the map at the center of the screen
+middle_height = (WINDOW_HEIGHT-map_height)//2
+middle_width = (WINDOW_WIDTH-map_width)//2
+    # Fish image in grid
+FISH = pygame.transform.scale(FISH_IMAGE, (blockSize, blockSize))
 
-
-# ---
-# Static Objects
-# ---
-def randomPosition(screenWidth, screenHeight):
-    randW = random.randint(0, screenWidth)
-    randH = random.randint(0, screenHeight)
-    return pygame.Rect(randW, randH, OBSTACLES_WIDTH, OBSTACLES_HEIGHT)
-
-fish_rect = pygame.Rect((WIDTH-OBSTACLES_WIDTH)//2, (HEIGHT-OBSTACLES_HEIGHT), OBSTACLES_WIDTH, OBSTACLES_HEIGHT)
-rock01_rect = randomPosition(WIDTH-OBSTACLES_WIDTH, HEIGHT-OBSTACLES_HEIGHT)
-#rock01_rect = pygame.Rect((WIDTH-OBSTACLES_WIDTH)//2, (HEIGHT-OBSTACLES_HEIGHT)//2, OBSTACLES_WIDTH, OBSTACLES_HEIGHT) # test lose condition
-clam_rect = randomPosition(WIDTH-OBSTACLES_WIDTH, HEIGHT-OBSTACLES_HEIGHT)
-
-obstacles = [rock01_rect, clam_rect]
-
-# ---
-# Dynamic Objects
-# ---
-def fishAlgo(currentPos):
-    currentPos.y -= 3
-
-# Obstacles
-def dynamicObs(currentPos):
-    global VEL
-    if currentPos.x + VEL >= WIDTH-currentPos.width:
-        VEL = -(VEL)
-    elif currentPos.x + VEL <= 0:
-        VEL = -(VEL)
-    currentPos.x += VEL
-
-# ---
-# WIN / LOSE
-# ---
-def handle_collision(fish_rect, obstacles):
-    global Lose
-    for obj in obstacles:
-        if fish_rect.colliderect(obj):      # --- LOSE CONDITION ---
-            Lose = True
-            
-def draw_outcome(text):
-    draw_text = WINNER_FONT.render(text, 1, WHITE)
-    WIN.blit(draw_text, (WIDTH/2 - draw_text.get_width() /
-                         2, HEIGHT/2 - draw_text.get_height()/2))
-    pygame.display.update()
-    pygame.time.delay(5000)
-# ---
-# Main Functions5
-# ---
-def draw_window(fish_rect, clam_rect):
-    global Win
-    WIN.blit(OCEAN, (0, 0))     # BG
-
-    # Obstacles
-    WIN.blit(CLAM, (clam_rect.x, clam_rect.y))
-    WIN.blit(ROCK01, (rock01_rect.x, rock01_rect.y))
-
-    if (fish_rect.x <= 0):
-        fish_rect.x = 0
-    elif (fish_rect.x >= WIDTH):
-        fish_rect.x = WIDTH
-    if (fish_rect.y <= 0):      # --- WIN CONDITION ---
-        fish_rect.y = 0
-        Win = True
-    WIN.blit(FISH, (fish_rect.x, fish_rect.y))  # Fish
-
-    pygame.display.update()
-
+# ~~~
+# FUNCTIONS
+# ~~~
 def main():
-    clock = pygame.time.Clock() #FPS
+    pygame.init()
+    global fish_x, fish_y
+    CLOCK = pygame.time.Clock()
 
     # game loop
     run = True
     while run:
-        clock.tick(FPS)
+        #print(fish_x,fish_y);      #DEBUG
+        CLOCK.tick(FPS)
         for event in pygame.event.get():
-            # Close window condition == quit game loop
             if event.type == pygame.QUIT:
-                run = False
                 pygame.quit()
-        if Win:
-            draw_outcome("You Win")
+        # Arrived at destination flag
+        if (DEST_X == fish_x and DEST_Y == fish_y):
+            run = False
+            #pygame.quit()
             break
-        if Lose:
-            draw_outcome("You Lose")
-            break
-        # Position Updates
-        fishAlgo(fish_rect)
-        dynamicObs(clam_rect)
+        # Position Updates-- check whether space is occupied or not
+        temp_x, temp_y = move(fish_x, fish_y, DEST_X, DEST_Y);
+        if ((temp_x, temp_y) not in obstacles):
+            fish_x, fish_y = temp_x, temp_y
+        drawGrid()
 
-        handle_collision(fish_rect, obstacles)
-        
-        draw_window(fish_rect, clam_rect)   # Draw Function
-    main()
+def drawGrid():
+    global fish_x, fish_y
+    SCREEN.blit(OCEAN, (0,0))       # Refresh the Screen
+    # will record the relative position
+    temp_width = 0
+    temp_height = 0
+    # x and y are absolute positions on the screen
+    # as we want to draw the map in the middle
+    for x in range(middle_width, middle_width + map_width, blockSize):
+        for y in range(middle_height, middle_height + map_height, blockSize):
+            rect = pygame.Rect(x, y, blockSize, blockSize)
+            if ((temp_width,temp_height)in obstacles):              # obstacle
+                pygame.draw.rect(SCREEN, BLACK, rect, 0)
+            elif (temp_width == fish_x and temp_height == fish_y):  # fish
+                SCREEN.blit(FISH, (x,y))
+            elif (temp_width == DEST_X and temp_height == DEST_Y):  # destination
+                pygame.draw.rect(SCREEN, RED, rect, 0)
+            else:                                                   # free space
+                pygame.draw.rect(SCREEN, WHITE, rect, 1)
+            temp_width+=1
+        temp_height+=1
+        temp_width = 0
+    pygame.display.update()
 
 if __name__ == "__main__":
     main()
