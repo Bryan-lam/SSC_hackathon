@@ -13,8 +13,18 @@ from pygame.locals import (
     QUIT,
     )
 
-SCREEN_WIDTH = 1000
-SCREEN_HEIGHT = 900
+SCREEN_WIDTH = 1800
+SCREEN_HEIGHT = 1000
+BLOCK_WIDTH = 60
+BLOCK_HEIGHT = 50
+ARRAY_WIDTH = SCREEN_WIDTH/BLOCK_WIDTH #30
+ARRAY_HEIGHT = SCREEN_HEIGHT/BLOCK_HEIGHT  #20
+obstacles_pos = [(2,2), (3,3), (4,4), (5,5), (10,10)]
+charge_pos = [(3,5), (6,4)]
+START_X = 1
+START_Y = 1
+DEST_X = 29
+DEST_Y = 19
 LIVES = 3
 hit = False
 
@@ -54,18 +64,29 @@ class Obstacle(pygame.sprite.Sprite):
         else:
             self.surf = pygame.image.load("rock_4.png").convert()
         self.surf.set_colorkey((0,0,0), RLEACCEL)
-        self.rect = self.surf.get_rect(
-            center = (
-                random.randint(100, SCREEN_WIDTH),
-                random.randint(70,SCREEN_HEIGHT),
-            )
-        )
+        
+
+class Charge(pygame.sprite.Sprite):
+    def __init__(self):
+        super(Charge, self).__init__()
+        self.surf = pygame.image.load("charging_station.png").convert()
+        self.surf.set_colorkey((0,0,0), RLEACCEL)
+        ##self.rect = self.surf.get_rect(
+        ##    center = (
+        ##       random.randint(100, SCREEN_WIDTH),
+        ##        random.randint(70,SCREEN_HEIGHT),
+        ##    )
+        ##)
+
+        
 class Player(pygame.sprite.Sprite):
     def __init__(self):
         super(Player,self).__init__()
         self.surf = pygame.image.load("fishy.png").convert()
         self.surf.set_colorkey((0,0,0), RLEACCEL)
-        self.rect = self.surf.get_rect()
+        self.rect = self.surf.get_rect(
+            center = (START_X * BLOCK_WIDTH + BLOCK_WIDTH/2, START_Y * BLOCK_HEIGHT + BLOCK_HEIGHT/2)
+            )
     def update(self, pressed_keys):
         if pressed_keys[K_UP]:
             self.rect.move_ip(0, -5)
@@ -88,12 +109,42 @@ class Player(pygame.sprite.Sprite):
         if self.rect.bottom >= SCREEN_HEIGHT:
             self.rect.bottom = SCREEN_HEIGHT
 
+def draw_grid():
+    global start
+    temp_width = 0
+    temp_height = 0
+    for i in range(0, SCREEN_WIDTH, BLOCK_WIDTH):
+        for j in range (0, SCREEN_HEIGHT, BLOCK_HEIGHT):
+            if((temp_width, temp_height) in obstacles_pos):
+                new_obstacle = Obstacle()
+                new_obstacle.rect = new_obstacle.surf.get_rect(
+                    center = (
+                        temp_width * BLOCK_WIDTH + BLOCK_WIDTH/2,
+                        temp_height * BLOCK_HEIGHT + BLOCK_HEIGHT/2,
+                        )
+                )
+                obstacles.add(new_obstacle)
+                all_sprites.add(new_obstacle)
+            elif((temp_width, temp_height) in charge_pos):
+                new_charge = Charge()
+                new_charge.rect = new_charge.surf.get_rect(
+                    center = (
+                        temp_width * BLOCK_WIDTH + BLOCK_WIDTH/2,
+                        temp_height * BLOCK_HEIGHT + BLOCK_HEIGHT/2,
+                        )
+                )
+                charging_stations.add(new_charge)
+                all_sprites.add(new_charge)
+            temp_width += 1
+        temp_height += 1
+        temp_width = 0
+
 pygame.init()
 
 screen = pygame.display.set_mode((SCREEN_WIDTH,SCREEN_HEIGHT))
 bg = pygame.image.load("bg.png")
 ADDENEMY = pygame.USEREVENT + 1
-pygame.time.set_timer(ADDENEMY, 1000) ##add new enemy every 250 milliseconds
+pygame.time.set_timer(ADDENEMY, 1000) ##add new enemy every 1000 milliseconds
 checkrock = pygame.USEREVENT + 2
 pygame.time.set_timer(checkrock, 1000)
 
@@ -101,14 +152,10 @@ player = Player()
 
 enemies = pygame.sprite.Group()
 obstacles = pygame.sprite.Group()
+charging_stations = pygame.sprite.Group()
 all_sprites = pygame.sprite.Group()
-
-
-for i in range(6):
-    new_obstacle = Obstacle()
-    obstacles.add(new_obstacle)
-    all_sprites.add(new_obstacle)
     
+draw_grid()    
 all_sprites.add(player) 
 
 running = True
