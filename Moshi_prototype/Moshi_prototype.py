@@ -17,14 +17,34 @@ SCREEN_WIDTH = 1800
 SCREEN_HEIGHT = 1000
 BLOCK_WIDTH = 60
 BLOCK_HEIGHT = 50
-ARRAY_WIDTH = SCREEN_WIDTH/BLOCK_WIDTH #30
-ARRAY_HEIGHT = SCREEN_HEIGHT/BLOCK_HEIGHT  #20
-obstacles_pos = [(2,2), (3,3), (4,4), (5,5), (10,10)]
-charge_pos = [(3,5), (6,4)]
-START_X = 1
-START_Y = 1
-DEST_X = 29
-DEST_Y = 19
+ARRAY_WIDTH = SCREEN_WIDTH//BLOCK_WIDTH #30
+ARRAY_HEIGHT = SCREEN_HEIGHT//BLOCK_HEIGHT  #20
+obstacles_pos = [(2,2), (3,3), (4,4), (5,5), (10,10)] ##coordinates of obstacles
+charge_pos = [(3,5), (6,4)]    ##cordinates of charging stations
+##if implementing array
+use_array = True  ##set to false to use list of obstacle and charging point coordinates instead
+array_map = [[0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+         [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+         [0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+         [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0],
+         [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+         [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1,0],
+         [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+         [0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+         [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+         [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+         [2,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2],
+         [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+         [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+         [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+         [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0],
+         [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+         [0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+         [0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+         [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+         [0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]]  ##2 for charging_station, 1 for obstacles
+START = (1,1)
+DEST = (29,19)
 LIVES = 3
 hit = False
 
@@ -40,11 +60,11 @@ class Enemy(pygame.sprite.Sprite):
         self.surf.set_colorkey((0,0,0), RLEACCEL)
         self.rect = self.surf.get_rect(
             center = (
-                random.randint(SCREEN_WIDTH + 20, SCREEN_WIDTH + 100),
-                random.randint(0,SCREEN_HEIGHT),
+                random.randint(SCREEN_WIDTH + 5, SCREEN_WIDTH + 20),
+                random.randint(0, 29) * BLOCK_HEIGHT, ##reduces enemy overlap
             )
         )
-        self.speed = random.randint(1,1)
+        self.speed = random.randint(1,3)
         
     def update(self):
         self.rect.move_ip(-self.speed, 0)
@@ -71,12 +91,6 @@ class Charge(pygame.sprite.Sprite):
         super(Charge, self).__init__()
         self.surf = pygame.image.load("charging_station.png").convert()
         self.surf.set_colorkey((0,0,0), RLEACCEL)
-        ##self.rect = self.surf.get_rect(
-        ##    center = (
-        ##       random.randint(100, SCREEN_WIDTH),
-        ##        random.randint(70,SCREEN_HEIGHT),
-        ##    )
-        ##)
 
         
 class Player(pygame.sprite.Sprite):
@@ -85,7 +99,7 @@ class Player(pygame.sprite.Sprite):
         self.surf = pygame.image.load("fishy.png").convert()
         self.surf.set_colorkey((0,0,0), RLEACCEL)
         self.rect = self.surf.get_rect(
-            center = (START_X * BLOCK_WIDTH + BLOCK_WIDTH/2, START_Y * BLOCK_HEIGHT + BLOCK_HEIGHT/2)
+            center = (START[1] * BLOCK_WIDTH + BLOCK_WIDTH/2, START[0] * BLOCK_HEIGHT + BLOCK_HEIGHT/2)
             )
     def update(self, pressed_keys):
         if pressed_keys[K_UP]:
@@ -110,34 +124,59 @@ class Player(pygame.sprite.Sprite):
             self.rect.bottom = SCREEN_HEIGHT
 
 def draw_grid():
-    global start
-    temp_width = 0
-    temp_height = 0
-    for i in range(0, SCREEN_WIDTH, BLOCK_WIDTH):
-        for j in range (0, SCREEN_HEIGHT, BLOCK_HEIGHT):
-            if((temp_width, temp_height) in obstacles_pos):
-                new_obstacle = Obstacle()
-                new_obstacle.rect = new_obstacle.surf.get_rect(
-                    center = (
-                        temp_width * BLOCK_WIDTH + BLOCK_WIDTH/2,
-                        temp_height * BLOCK_HEIGHT + BLOCK_HEIGHT/2,
-                        )
-                )
-                obstacles.add(new_obstacle)
-                all_sprites.add(new_obstacle)
-            elif((temp_width, temp_height) in charge_pos):
-                new_charge = Charge()
-                new_charge.rect = new_charge.surf.get_rect(
-                    center = (
-                        temp_width * BLOCK_WIDTH + BLOCK_WIDTH/2,
-                        temp_height * BLOCK_HEIGHT + BLOCK_HEIGHT/2,
-                        )
-                )
-                charging_stations.add(new_charge)
-                all_sprites.add(new_charge)
-            temp_width += 1
-        temp_height += 1
+    global use_array, array
+    if use_array == False:
         temp_width = 0
+        temp_height = 0
+        for i in range(0, SCREEN_WIDTH, BLOCK_WIDTH):
+            for j in range (0, SCREEN_HEIGHT, BLOCK_HEIGHT):
+                if((temp_width, temp_height) in obstacles_pos):
+                    new_obstacle = Obstacle()
+                    new_obstacle.rect = new_obstacle.surf.get_rect(
+                        center = (
+                            temp_width * BLOCK_WIDTH + BLOCK_WIDTH/2,
+                            temp_height * BLOCK_HEIGHT + BLOCK_HEIGHT/2,
+                            )
+                    )
+                    obstacles.add(new_obstacle)
+                    all_sprites.add(new_obstacle)
+                elif((temp_width, temp_height) in charge_pos):
+                    new_charge = Charge()
+                    new_charge.rect = new_charge.surf.get_rect(
+                        center = (
+                            temp_width * BLOCK_WIDTH + BLOCK_WIDTH/2,
+                            temp_height * BLOCK_HEIGHT + BLOCK_HEIGHT/2,
+                            )
+                    )
+                    charging_stations.add(new_charge)
+                    all_sprites.add(new_charge)
+                temp_width += 1
+            temp_height += 1
+            temp_width = 0
+    else:
+        for i in range(ARRAY_HEIGHT):
+            for j in range (ARRAY_WIDTH):
+                if (array_map[i][j] == 1):
+                    new_obstacle = Obstacle()
+                    new_obstacle.rect = new_obstacle.surf.get_rect(
+                        center = (
+                            i * BLOCK_HEIGHT + BLOCK_HEIGHT/2,
+                            j * BLOCK_WIDTH + BLOCK_WIDTH/2,  ##possibly wrong might need to switch
+                            )
+                    )
+                    obstacles.add(new_obstacle)
+                    all_sprites.add(new_obstacle)
+                elif (array_map[i][j] == 2):
+                    new_charge = Charge()
+                    new_charge.rect = new_charge.surf.get_rect(
+                        center = (
+                            i * BLOCK_HEIGHT + BLOCK_HEIGHT/2,
+                            j * BLOCK_WIDTH + BLOCK_WIDTH/2,
+                            )
+                    )
+                    charging_stations.add(new_charge)
+                    all_sprites.add(new_charge)
+                        
 
 pygame.init()
 
