@@ -115,19 +115,27 @@ class Player(pygame.sprite.Sprite):
         if pressed_keys[K_UP]:
             self.rect.move_ip(0, -self.speed)
             self.distance_travelled += 1
+            if pygame.sprite.spritecollideany(player,obstacles):
+                self.rect.move_ip(0, self.speed)
         if pressed_keys[K_DOWN]:
             self.rect.move_ip(0, self.speed)
             self.distance_travelled += 1
+            if pygame.sprite.spritecollideany(player,obstacles):
+                self.rect.move_ip(0, -self.speed)
         if pressed_keys[K_LEFT]:
             self.rect.move_ip(-self.speed, 0)
             self.surf = pygame.image.load("fishy_2.png").convert()
             self.surf.set_colorkey((0,0,0), RLEACCEL)
             self.distance_travelled += 1
+            if pygame.sprite.spritecollideany(player,obstacles):
+                self.rect.move_ip(self.speed, 0)
         if pressed_keys[K_RIGHT]:
             self.rect.move_ip(self.speed, 0)
             self.surf = pygame.image.load("fishy.png").convert()
             self.surf.set_colorkey((0,0,0), RLEACCEL)
             self.distance_travelled += 1
+            if pygame.sprite.spritecollideany(player,obstacles):
+                self.rect.move_ip(-self.speed, 0)
         if self.rect.left < 0:
             self.rect.left = 0
         if self.rect.right > SCREEN_WIDTH:
