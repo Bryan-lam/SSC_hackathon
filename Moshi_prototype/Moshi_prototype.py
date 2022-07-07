@@ -33,7 +33,7 @@ array_map = [[0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
          [0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
          [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
          [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-         [2,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2],
+         [2,0,0,0,1,0,0,0,0,0,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2],
          [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
          [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
          [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
@@ -94,6 +94,12 @@ class Charge(pygame.sprite.Sprite):
         self.surf = pygame.image.load("charging_station.png").convert()
         self.surf.set_colorkey((0,0,0), RLEACCEL)
 
+class Info(pygame.sprite.Sprite):
+    def __init__(self):
+        super(Info, self).__init__()
+        self.surf = pygame.image.load("info_point.png").convert()
+        self.surf.set_colorkey((0,0,0), RLEACCEL)
+        
         
 class Player(pygame.sprite.Sprite):
     def __init__(self):
@@ -158,6 +164,16 @@ def draw_grid():
                     )
                     charging_stations.add(new_charge)
                     all_sprites.add(new_charge)
+                elif((temp_width, temp_height) in info_pos):
+                    new_info = Info()
+                    new_info.rect = new_info.surf.get_rect(
+                        center = (
+                            temp_width * BLOCK_WIDTH + BLOCK_WIDTH/2,
+                            temp_height * BLOCK_HEIGHT + BLOCK_HEIGHT/2,
+                            )
+                        )
+                    info_points.add(new_info)
+                    all_sprites.add(new_info)
                 temp_width += 1
             temp_height += 1
             temp_width = 0
@@ -184,6 +200,17 @@ def draw_grid():
                     )
                     charging_stations.add(new_charge)
                     all_sprites.add(new_charge)
+                elif (array_map[i][j] == 3):
+                      new_info = Info()
+                      new_info.rect = new_info.surf.get_rect(
+                          center = (
+                              i * BLOCK_WIDTH + BLOCK_WIDTH/2,
+                              j * BLOCK_HEIGHT + BLOCK_HEIGHT/2,
+                             )
+                    )
+                      info_points.add(new_info)
+                      all_sprites.add(new_info)
+                      
                         
 
 pygame.init()
@@ -197,14 +224,16 @@ pygame.time.set_timer(checkrock, hit_interval)
 
 
 player = Player()
-
+player_group = pygame.sprite.Group()
 enemies = pygame.sprite.Group()
 obstacles = pygame.sprite.Group()
 charging_stations = pygame.sprite.Group()
+info_points = pygame.sprite.Group()
 all_sprites = pygame.sprite.Group()
     
 draw_grid()    
 all_sprites.add(player) 
+player_group.add(player)
 
 running = True
 while running:
@@ -242,6 +271,9 @@ while running:
             hit = True
     if pygame.sprite.spritecollideany(player,charging_stations): #recharge
         player.distance_travelled = 0
+    if pygame.sprite.spritecollideany(player,info_points):
+        gathered = pygame.sprite.groupcollide(player_group, info_points, False, True)
+    
         
     ##check proximity
     ##for enemy in enemies:
