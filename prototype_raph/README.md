@@ -11,4 +11,4 @@ There are currently two methods of finding the obstacles: set and 2D array
 - ARRAY: array of 0s and 1s used to generate the map, 1s being obstacles.
 
 *submission.py* file for students to edit in, where they submit their algorithm
-- move(pos_x, pos_y, dest_x, dest_y): move function that gives current position and destination position
+- shortest_path(grid, start, abs, dest): function to be filled by students, imported collections
