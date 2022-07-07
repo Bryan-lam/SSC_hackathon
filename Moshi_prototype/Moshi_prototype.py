@@ -46,7 +46,9 @@ array_map = [[0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
 START = (1,1)
 DEST = (29,19)
 LIVES = 3
-hit = False
+hit = False 
+hit_interval = 750 ##minimum time between rock collisions
+enemy_interval = 1000 ##minimum time between new enemies spawning
 
 
 class Enemy(pygame.sprite.Sprite):
@@ -101,19 +103,25 @@ class Player(pygame.sprite.Sprite):
         self.rect = self.surf.get_rect(
             center = (START[1] * BLOCK_WIDTH + BLOCK_WIDTH/2, START[0] * BLOCK_HEIGHT + BLOCK_HEIGHT/2)
             )
+        self.speed = 5
+        self.distance_travelled = 0
     def update(self, pressed_keys):
         if pressed_keys[K_UP]:
-            self.rect.move_ip(0, -5)
+            self.rect.move_ip(0, -self.speed)
+            self.distance_travelled += 1
         if pressed_keys[K_DOWN]:
-            self.rect.move_ip(0, 5)
+            self.rect.move_ip(0, self.speed)
+            self.distance_travelled += 1
         if pressed_keys[K_LEFT]:
-            self.rect.move_ip(-5, 0)
+            self.rect.move_ip(-self.speed, 0)
             self.surf = pygame.image.load("fishy_2.png").convert()
             self.surf.set_colorkey((0,0,0), RLEACCEL)
+            self.distance_travelled += 1
         if pressed_keys[K_RIGHT]:
-            self.rect.move_ip(5, 0)
+            self.rect.move_ip(self.speed, 0)
             self.surf = pygame.image.load("fishy.png").convert()
             self.surf.set_colorkey((0,0,0), RLEACCEL)
+            self.distance_travelled += 1
         if self.rect.left < 0:
             self.rect.left = 0
         if self.rect.right > SCREEN_WIDTH:
@@ -183,9 +191,10 @@ pygame.init()
 screen = pygame.display.set_mode((SCREEN_WIDTH,SCREEN_HEIGHT))
 bg = pygame.image.load("bg.png")
 ADDENEMY = pygame.USEREVENT + 1
-pygame.time.set_timer(ADDENEMY, 1000) ##add new enemy every 1000 milliseconds
+pygame.time.set_timer(ADDENEMY, enemy_interval) ##add new enemy every 1000 milliseconds
 checkrock = pygame.USEREVENT + 2
-pygame.time.set_timer(checkrock, 1000)
+pygame.time.set_timer(checkrock, hit_interval)
+
 
 player = Player()
 
@@ -231,10 +240,19 @@ while running:
         if hit == False:
             LIVES = LIVES - 1
             hit = True
+    if pygame.sprite.spritecollideany(player,charging_stations): #recharge
+        player.distance_travelled = 0
+        
     ##check proximity
-    for enemy in enemies:
-        if math.dist(player.rect.center, enemy.rect.center) <= 100:
-            running = False
+    ##for enemy in enemies:
+       ## if math.dist(player.rect.center, enemy.rect.center) <= 100:
+            ##running = False
+            
+    ##maximum number of moves player can make before running out of fuel         
+    if player.distance_travelled >= 500:
+        player.kill()
+        running = False
+        
     if LIVES == 0:
         player.kill()
         running = False
