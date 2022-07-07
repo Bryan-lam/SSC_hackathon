@@ -1,7 +1,8 @@
 import pygame
 import os
+
 from array_map import *
-from submission import move
+from submission import shortest_path
 pygame.font.init()
 
 # ~~~
@@ -14,9 +15,11 @@ WINDOW_WIDTH = 800
 SCREEN = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
 pygame.display.set_caption("Fish Swimming Across Harbour")
 FPS = 10        # smaller = slower
+
 #main variable
 fish_x = START_X
 fish_y = START_Y
+
 # aesthetics
 BLACK = (0, 0, 0)
 WHITE = (200, 200, 200)
@@ -26,6 +29,7 @@ OCEAN = pygame.transform.scale(pygame.image.load(
     os.path.join('Assets', 'background.jpg')), (WINDOW_WIDTH, WINDOW_HEIGHT))
 FISH_IMAGE = pygame.image.load(
     os.path.join('Assets', 'fish.png'))
+
 # draw function
 blockSize = 30          #Set the size of the grid block
     # size of the map
@@ -47,22 +51,33 @@ def main():
 
     # game loop
     run = True
-    while run:
-        #print(fish_x,fish_y);      #DEBUG
+    notArrived = True
+
+    
+    path = shortest_path(ARRAY, (START_X, START_Y), obstacles, (DEST_X, DEST_Y))
+    count = 0
+    print(path)
+    
+    while (run):
+        # print(fish_x,fish_y);      #DEBUG
         CLOCK.tick(FPS)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
+                run = False
                 pygame.quit()
-        # Arrived at destination flag
-        if (DEST_X == fish_x and DEST_Y == fish_y):
-            run = False
-            #pygame.quit()
-            break
-        # Position Updates-- check whether space is occupied or not
-        temp_x, temp_y = move(fish_x, fish_y, DEST_X, DEST_Y);
-        if ((temp_x, temp_y) not in obstacles):
-            fish_x, fish_y = temp_x, temp_y
-        drawGrid()
+
+        if (notArrived):        # if fish is still moving
+            # Position Updates from path
+            fish_x = path[count][0]
+            fish_y = path[count][1]
+            
+            drawGrid()
+            count+=1
+            
+            # Checking win condition
+            if (DEST_X == fish_x and DEST_Y == fish_y):
+                # print("Arrived at destination");    #DEBUG
+                notArrived = False
 
 def drawGrid():
     global fish_x, fish_y
