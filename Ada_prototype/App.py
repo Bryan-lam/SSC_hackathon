@@ -64,13 +64,16 @@ class UserInterface():
     def __init__(self):
         pygame.init()
 
+        # initialise game, set up each cell in game as 32 px
         self.gameState = GameState()
         self.cellSize = Vector2(32, 32)
 
+        # set up window size by each cell size * map size
         self.windowSize = self.gameState.worldSize.elementwise() * self.cellSize
         self.window = pygame.display.set_mode(
             (int(self.windowSize.x), int(self.windowSize.y)))
 
+        # load all textures
         self.playerTexture = pygame.image.load(PLAYER_IMAGE)
         self.background = pygame.transform.scale(pygame.image.load(
             BACKGROUND_IMAGE), (int(self.windowSize.x), int(self.windowSize.y)))
@@ -83,24 +86,29 @@ class UserInterface():
             self.walls.append(pygame.transform.scale(pygame.image.load(
                 wall), (int(self.cellSize.x), int(self.cellSize.y))))
 
+        # generate whole map once
         self.moveCommand = Vector2(0, 0)
         self.window.blit(self.background, (0, 0))
         self.genMap()
         self.updatePlayer()
 
-        initialPos = Vector2(0, 0)  # get start pos
+        # get start pos of player
+        initialPos = Vector2(0, 0)
         for y in range(COL):
             for x in range(ROW):
                 if MAP[y][x] == 1:
                     initialPos = Vector2(x, y)
                     break
 
+        # spawn player
         self.gameState.setPlayerPos(initialPos)
 
+        # start game
         pygame.display.update()
         self.clock = pygame.time.Clock()
         self.running = True
 
+    # get user input for our own testing
     def processInput(self):
         self.moveCommand = Vector2(0, 0)
         for event in pygame.event.get():
@@ -122,21 +130,26 @@ class UserInterface():
                 self.updatePlayer()
 
     def updatePlayer(self):
+        # after getting user input, update player position in gameState
         self.gameState.update(self.moveCommand)
 
+        # update the last block where player was at (so that the whole map will not be needed to generate again)
         if self.gameState.playerPos != self.gameState.lastPlayerPos:
             self.updateCell(int(self.gameState.lastPlayerPos.x),
                             int(self.gameState.lastPlayerPos.y), True)
 
+        # spawn player in new pos
         spritePoint = self.gameState.playerPos.elementwise()*self.cellSize
         self.window.blit(pygame.transform.scale(
             self.playerTexture, (int(self.cellSize.x), int(self.cellSize.y))), spritePoint)
 
         pygame.display.update()
 
+        # check if player is on destination
         self.checkEnd(int(self.gameState.playerPos.x),
                       int(self.gameState.playerPos.y),)
 
+    # get map by the MAP array
     def genMap(self):
         for y in range(COL):
             for x in range(ROW):
@@ -148,8 +161,10 @@ class UserInterface():
         rect = pygame.Rect(
             int(pos.x), int(pos.y), int(self.cellSize.x), int(self.cellSize.y))
 
+        # as background is generated in a whole, so it will only need to be generate if the player was on that cell
         if isMove and currentPos == 0:
             self.window.blit(self.background, pos, rect)
+        # gen block based on map
         elif currentPos == 1:
             pygame.draw.rect(self.window, START_COLOR, rect)
         elif currentPos == 2:
@@ -164,6 +179,7 @@ class UserInterface():
         elif currentPos == 5:
             pygame.draw.rect(self.window, ENERGY_COLOR, rect)
 
+    # check if player is on destination, display steps player took to get there
     def checkEnd(self, x, y):
         if MAP[y][x] == 2:
             text = pygame.font.SysFont(
@@ -178,8 +194,10 @@ class UserInterface():
 
     def run(self, isStudent):
         while self.running:
+            # if student, run based on the array provided by student
             if isStudent:
                 self.processInput()
+                # the Vectors equals to the move command in above code
                 commands = shortest_path(MAP, Vector2(1, 0), Vector2(-1, 0),
                                          Vector2(0, 1), Vector2(0, -1))
                 for step in commands:
@@ -187,6 +205,7 @@ class UserInterface():
                     self.updatePlayer()
                     pygame.time.delay(75)
                     self.clock.tick(60)
+                    # todo: handle code if player cannot reach destination
                 return
             self.processInput()
             self.clock.tick(60)
@@ -194,7 +213,5 @@ class UserInterface():
 
 userInterface = UserInterface()
 userInterface.run(True)
-
-# print(shortest_path(MAP,))
 
 pygame.quit()
